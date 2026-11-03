@@ -1,0 +1,18 @@
+{
+    // Ember lint entry point: the framework-agnostic base rules shared with traverse, dusk and tack.
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "extends": ["./oxlintrc.base.json"],
+    "env": {
+        "browser": true,
+        "webextensions": true
+    },
+    "overrides": [
+        {
+            "files": ["scripts/**"],
+            "env": {
+                "node": true
+            }
+        }
+    ],
+    "ignorePatterns": ["node_modules/**", "dist/**", "web-ext-artifacts/**", "test/fixtures/**"]
+}

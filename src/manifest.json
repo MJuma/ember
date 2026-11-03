@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "Ember",
+    "version": "0.1.2",
+    "description": "A dark skin for old.reddit.com, with colored comment threads.",
+    "icons": {
+        "48": "icons/ember.svg",
+        "96": "icons/ember.svg"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://old.reddit.com/*"
+            ],
+            "css": [
+                "ember.css"
+            ],
+            "js": [
+                "ember.js"
+            ],
+            "run_at": "document_start"
+        }
+    ],
+    "permissions": [
+        "storage"
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "ember@mjuma",
+            "strict_min_version": "140.0",
+            "update_url": "https://github.com/MJuma/ember/releases/latest/download/updates.json",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ]
+            }
+        },
+        "gecko_android": {
+            "strict_min_version": "142.0"
+        }
+    }
+}

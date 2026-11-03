@@ -1,0 +1,15 @@
+node_modules
+dist
+web-ext-artifacts
+.amo-upload-uuid
+.env
+.measure
+# Firefox profile used by `pnpm dev` (keeps your Reddit login between runs).
+.dev-profile
+# Real old.reddit pages from `pnpm fixtures` (scrubbed, but still other people's posts): local only.
+test/fixtures/*.html
+test/fixtures/assets/
+# Signed builds from the release workflow.
+release
+# Launch video work (brag): frames, music, demo pages.
+brag-output

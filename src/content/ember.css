@@ -1,0 +1,1096 @@
+/*
+ * Ember: a dark skin for old.reddit.com, with colored comment threads. Everything keys off
+ * attributes the content script sets on <html> at document start (from a cached copy of your
+ * settings), so the theme is in place before the page first paints:
+ *   data-ember            Ember's theme styles the page (off when a subreddit's own styles are on)
+ *   data-ember-theme      dusk | dark | dim | black | light
+ *   data-ember-width      full | wide | narrow
+ *   data-ember-indent     compact | normal | wide
+ *   data-ember-threads    flat comments with a colored bar per reply level
+ *   data-ember-authors    each author's name in their own color
+ *   data-ember-sidebar    show the subreddit sidebar
+ */
+
+/* ── Themes ─────────────────────────────────────────────── */
+
+:root[data-ember] {
+    color-scheme: dark;
+}
+
+/* The palette is always defined: Ember's own controls and comment bars use it either way. */
+:root {
+    --bg: #101216;
+    --surface: #171a1f;
+    --raised: #1d2128;
+    --border: #262b33;
+    --text: #d6d9de;
+    --muted: #868d98;
+    --title: #eceef1;
+    --read: #7a808a;
+    --accent: #ff7a1a;
+    --on-accent: #101216;
+    --link: #8cc4ff;
+    --link-visited: #b39ddb;
+    --upvote: #ff8b60;
+    --downvote: #9494ff;
+    --shadow: rgb(0 0 0 / 0.35);
+    --rail-0: #ff8a3d;
+    --rail-1: #4fb3d9;
+    --rail-2: #a78bfa;
+    --rail-3: #6cc070;
+    --rail-4: #f06292;
+    --rail-5: #e5c07b;
+    --rail-6: #5c9cf5;
+    --rail-7: #4dd0b5;
+    --name-s: 62%;
+    --name-l: 74%;
+    --rail: 3px;
+    --rail-gap: 10px;
+    --gutter: 0.75rem;
+    --indent: 22px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* The warm grays the Dark Reader extension gives Reddit. */
+:root[data-ember-theme='dark'] {
+    --bg: #181a1b;
+    --surface: #202324;
+    --raised: #26292b;
+    --border: #35393b;
+    --text: #dcd8d3;
+    --muted: #999083;
+    --title: #e8e6e3;
+    --read: #8c8577;
+    --accent: #e66a1f;
+    --on-accent: #181a1b;
+    --link: #5ea8ff;
+    --link-visited: #b48eff;
+}
+
+:root[data-ember-theme='dim'] {
+    --bg: #22272e;
+    --surface: #2d333b;
+    --raised: #2d333b;
+    --border: #373e47;
+    --text: #adbac7;
+    --muted: #768390;
+    --title: #cdd9e5;
+    --read: #6f7b88;
+    --accent: #f0883e;
+    --on-accent: #22272e;
+    --link: #539bf5;
+    --link-visited: #b083f0;
+    --shadow: rgb(0 0 0 / 0.4);
+}
+
+:root[data-ember-theme='black'] {
+    --bg: #000000;
+    --surface: #0f1012;
+    --raised: #17191c;
+    --border: #1f2226;
+    --text: #d0d3d8;
+    --muted: #7d838d;
+    --title: #eceef1;
+    --read: #6a7079;
+}
+
+:root[data-ember][data-ember-theme='light'] {
+    color-scheme: light;
+}
+
+:root[data-ember-theme='light'] {
+    --bg: #f6f6ef;
+    --surface: #ffffff;
+    --raised: #ffffff;
+    --border: #e2e2d8;
+    --text: #1f2328;
+    --muted: #6a6f76;
+    --title: #111111;
+    --read: #7c7c7c;
+    --accent: #e05a00;
+    --on-accent: #ffffff;
+    --link: #0a58ca;
+    --link-visited: #6f42c1;
+    --upvote: #ff4500;
+    --downvote: #7193ff;
+    --shadow: rgb(0 0 0 / 0.12);
+    --rail-0: #e8710a;
+    --rail-1: #1b8fbf;
+    --rail-2: #7c5cd6;
+    --rail-3: #3f9a45;
+    --rail-4: #d23f74;
+    --rail-5: #b8901f;
+    --rail-6: #2f6fd6;
+    --rail-7: #1f9e86;
+    --name-s: 55%;
+    --name-l: 36%;
+}
+
+:root[data-ember-indent='compact'] {
+    --indent: 14px;
+}
+
+:root[data-ember-indent='wide'] {
+    --indent: 32px;
+}
+
+/* ── Page ───────────────────────────────────────────────── */
+
+:root[data-ember],
+:root[data-ember] body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+:root[data-ember] body {
+    font: 13px/1.45 var(--font);
+}
+
+:root[data-ember] a {
+    color: var(--link);
+}
+
+:root[data-ember] .md,
+:root[data-ember] .usertext-body .md {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+:root[data-ember] .md a {
+    color: var(--link);
+}
+
+:root[data-ember] .md a:visited {
+    color: var(--link-visited);
+}
+
+:root[data-ember] .md p {
+    margin: 0.45em 0;
+}
+
+:root[data-ember] .md blockquote {
+    border-left: 3px solid var(--border);
+    color: var(--muted);
+}
+
+:root[data-ember] .md code,
+:root[data-ember] .md pre {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--mono);
+}
+
+:root[data-ember] .md table th,
+:root[data-ember] .md table td {
+    border-color: var(--border);
+}
+
+:root[data-ember] .md hr {
+    border-color: var(--border);
+    background: var(--border);
+}
+
+:root[data-ember] .md h1,
+:root[data-ember] .md h2,
+:root[data-ember] .md h3,
+:root[data-ember] .md h4 {
+    color: var(--title);
+}
+
+/* Inputs, buttons and menus. */
+:root[data-ember] input[type='text'],
+:root[data-ember] input[type='search'],
+:root[data-ember] input[type='password'],
+:root[data-ember] input[type='url'],
+:root[data-ember] textarea,
+:root[data-ember] select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+:root[data-ember] button,
+:root[data-ember] .btn,
+:root[data-ember] .morelink,
+:root[data-ember] .nextprev a {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--raised);
+    background-image: none;
+    color: var(--title);
+}
+
+:root[data-ember] .drop-choices,
+:root[data-ember] .hover-bubble,
+:root[data-ember] .author-tooltip,
+:root[data-ember] .modal-content,
+:root[data-ember] .popup {
+    border-color: var(--border);
+    background: var(--raised);
+    color: var(--text);
+}
+
+:root[data-ember] .drop-choices a.choice:hover {
+    background: var(--surface);
+}
+
+:root[data-ember] .dropdown.lightdrop .selected,
+:root[data-ember] .menuarea,
+:root[data-ember] .panestack-title {
+    border-color: var(--border);
+    color: var(--muted);
+}
+
+/* Banners Reddit puts above content. */
+:root[data-ember] .infobar,
+:root[data-ember] .commentsignupbar,
+:root[data-ember] .gold-wrap,
+:root[data-ember] .read-next-container {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+}
+
+.redesign-beta-optin,
+:root[data-ember] .promotedlink,
+:root[data-ember] .promoted,
+:root[data-ember] #ad_main,
+:root[data-ember] .ad-container,
+:root[data-ember] .premium-banner-outer,
+:root[data-ember] .listingsignupbar {
+    display: none !important;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+:root[data-ember] #header {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+:root[data-ember] #header-img:not(.default-header) {
+    width: auto;
+    max-width: 20rem;
+    height: auto;
+    max-height: 3rem;
+}
+
+/* Reddit's own logo is dark lettering; dark themes turn it light (the alien keeps its orange eyes). */
+:root[data-ember]:not([data-ember-theme='light']) #header-img.default-header {
+    filter: invert(0.92) hue-rotate(180deg);
+}
+
+:root[data-ember] #sr-header-area,
+:root[data-ember] #sr-more-link {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--muted);
+}
+
+:root[data-ember] #sr-header-area a,
+:root[data-ember] .sr-list a {
+    color: var(--muted);
+}
+
+:root[data-ember] #sr-header-area .srdrop .selected {
+    color: var(--title);
+}
+
+:root[data-ember] .srdrop .choice.top-option,
+:root[data-ember] .srdrop .choice.bottom-option {
+    border-color: var(--border);
+}
+
+:root[data-ember] #header-bottom-right {
+    border-radius: 8px 0 0 0;
+    background: var(--raised);
+    color: var(--muted);
+}
+
+:root[data-ember] #header-bottom-right a,
+:root[data-ember] .pagename a,
+:root[data-ember] .pagename {
+    color: var(--title);
+}
+
+:root[data-ember] .tabmenu li a {
+    border: 0;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+:root[data-ember] .tabmenu li.selected a {
+    border: 0;
+    border-bottom: 2px solid var(--accent);
+    background: transparent;
+    color: var(--title);
+    font-weight: 600;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+
+:root:not([data-ember-sidebar]) .side {
+    display: none;
+}
+
+/* Ember's stylesheet loses ties with Reddit's, so these name the chooser classes Reddit's margins use. */
+:root:not([data-ember-sidebar]) body > .content,
+:root:not([data-ember-sidebar]) body.with-listing-chooser > .content,
+:root:not([data-ember-sidebar]) body.with-listing-chooser.listing-chooser-collapsed > .content {
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+}
+
+:root:not([data-ember-sidebar])[data-ember-width='wide'] body > .content {
+    max-width: 85%;
+}
+
+:root:not([data-ember-sidebar])[data-ember-width='narrow'] body > .content {
+    max-width: 52rem;
+}
+
+/* The multireddit chooser, the collapsed bar down the left of the homepage, and the room it takes. */
+.listing-chooser {
+    display: none !important;
+}
+
+:root[data-ember-sidebar] body.with-listing-chooser > .content,
+:root[data-ember-sidebar] body.with-listing-chooser.listing-chooser-collapsed > .content {
+    margin-left: 5px;
+}
+
+:root body.with-listing-chooser .footer-parent,
+:root body.with-listing-chooser.listing-chooser-collapsed .footer-parent {
+    margin-left: 0;
+}
+
+:root[data-ember] .side,
+:root[data-ember] .side .md,
+:root[data-ember] .side .titlebox,
+:root[data-ember] .linkinfo {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--text);
+}
+
+:root[data-ember] .footer-parent,
+:root[data-ember] .footer,
+:root[data-ember] .bottommenu {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--muted);
+}
+
+/* ── Story lists ────────────────────────────────────────── */
+
+/* Posts are no taller than Reddit's (a 52px row plus an 8px gap), so a page shows as many. */
+:root[data-ember] .thing.link {
+    margin: 0;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+:root[data-ember] .link.last-clicked {
+    margin-left: -10px;
+    padding-left: 7px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+}
+
+:root[data-ember] .link .title,
+:root[data-ember] .link a.title {
+    color: var(--title);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+:root[data-ember] .link a.title:visited,
+:root[data-ember] .link.visited a.title {
+    color: var(--read);
+    font-weight: 400;
+}
+
+:root[data-ember] .link .domain,
+:root[data-ember] .link .domain a,
+:root[data-ember] .rank,
+:root[data-ember] .tagline,
+:root[data-ember] .tagline a:not(.author),
+:root[data-ember] .entry .buttons li a,
+:root[data-ember] .score {
+    color: var(--muted);
+}
+
+:root[data-ember] .tagline,
+:root[data-ember] .entry .buttons li {
+    font-size: 12px;
+}
+
+:root[data-ember] .thing.link .tagline,
+:root[data-ember] .thing.link .entry .buttons,
+:root[data-ember] .thing.link .entry .buttons li {
+    line-height: 1.2;
+}
+
+:root[data-ember] .rank {
+    font-size: 14px;
+}
+
+:root[data-ember] .entry .buttons li a.comments {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+:root[data-ember] .midcol .score.likes,
+:root[data-ember] .score.likes {
+    color: var(--upvote);
+}
+
+:root[data-ember] .midcol .score.dislikes,
+:root[data-ember] .score.dislikes {
+    color: var(--downvote);
+}
+
+:root[data-ember] .thing.stickied a.title,
+:root[data-ember] .stickied-tagline {
+    color: var(--rail-3);
+}
+
+:root[data-ember] .linkflairlabel,
+:root[data-ember] .flair,
+:root[data-ember] .linkflair .linkflairlabel {
+    border-color: var(--border);
+    background: var(--raised);
+    color: var(--muted);
+}
+
+/*
+ * Thumbnails. Reddit's placeholders (text post, link, image, NSFW, spoiler) are light gray sprite
+ * boxes; they become tiles in the theme's colors. Real thumbnails get the same rounded corners.
+ */
+:root[data-ember] .thing .thumbnail {
+    border-radius: 8px;
+}
+
+:root[data-ember] .thing .thumbnail img {
+    display: block;
+    border-radius: 8px;
+}
+
+:root[data-ember] .thing .thumbnail:is(.self, .default, .image, .nsfw, .spoiler) {
+    position: relative;
+    height: 50px;
+    background: var(--raised);
+    box-shadow: inset 0 0 0 1px var(--border);
+}
+
+:root[data-ember] .thing .thumbnail:is(.self, .default, .image)::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--muted);
+    mask: var(--glyph) center / 22px 22px no-repeat;
+}
+
+:root[data-ember] .thing .thumbnail.self {
+    --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14M5 11h14M5 16h9'/%3E%3C/svg%3E");
+}
+
+:root[data-ember] .thing .thumbnail.default {
+    --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'/%3E%3C/svg%3E");
+}
+
+:root[data-ember] .thing .thumbnail.image {
+    --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Ccircle cx='9' cy='10' r='1.5'/%3E%3Cpath d='M21 16l-5-5-9 8'/%3E%3C/svg%3E");
+}
+
+:root[data-ember] .thing .thumbnail:is(.nsfw, .spoiler)::before {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font: 700 10px/1 var(--font);
+    letter-spacing: 0.04em;
+}
+
+:root[data-ember] .thing .thumbnail.nsfw::before {
+    content: 'NSFW';
+    color: #e5534b;
+}
+
+:root[data-ember] .thing .thumbnail.spoiler::before {
+    content: 'SPOILER';
+}
+
+/* The expand buttons (text, video, gallery) are light sprites too; dark themes invert them. */
+:root[data-ember]:not([data-ember-theme='light']) .expando-button {
+    filter: invert(0.86) hue-rotate(180deg);
+    opacity: 0.85;
+}
+
+/* The post's own text box at the top of a thread. */
+:root[data-ember] .link .usertext-body .md,
+:root[data-ember] .expando .usertext-body .md {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    padding: 0.4rem 0.9rem;
+}
+
+:root[data-ember] .expando {
+    color: var(--text);
+}
+
+/* ── Comments ───────────────────────────────────────────── */
+
+:root[data-ember] .commentarea .usertext-edit .md,
+:root[data-ember] .commentarea textarea {
+    background: var(--surface);
+    color: var(--text);
+}
+
+:root[data-ember] .comment .tagline,
+:root[data-ember] .comment .tagline time {
+    color: var(--muted);
+}
+
+:root[data-ember] .comment .author {
+    font-weight: 600;
+}
+
+:root[data-ember] .comment .child {
+    border-left-color: var(--border);
+}
+
+:root[data-ember] .morecomments a,
+:root[data-ember] .deepthread a {
+    color: var(--accent);
+}
+
+/* The comment's age links to the comment, like HN. */
+.ember-age,
+.ember-age time {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.ember-age:hover time {
+    color: var(--title);
+    text-decoration: underline;
+}
+
+/* A comment's header is its collapse target (outside its links); the text below stays selectable. */
+.commentarea .comment > .entry > .tagline {
+    cursor: pointer;
+}
+
+/*
+ * Colored threads: comments sit flat, with a hairline above each one starting at its indent and a short
+ * bar in its level's color beside each reply. Each comment is a grid: bar, votes, then its content,
+ * with its replies on a row below, indented.
+ */
+:root[data-ember-threads] .commentarea .thing.comment {
+    display: grid;
+    grid-template-areas: 'bar votes entry' 'child child child';
+    grid-template-columns: auto auto minmax(0, 1fr);
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+    --tone: var(--rail-0);
+}
+
+:root[data-ember-threads] .commentarea > .sitetable > .thing.comment {
+    padding-left: var(--gutter);
+}
+
+:root[data-ember-threads] .commentarea > .sitetable > .thing.comment + .thing.comment {
+    margin-top: 0.5rem;
+}
+
+:root[data-ember-threads] .commentarea .thing.comment > .parent,
+:root[data-ember-threads] .commentarea .thing.comment > .clearleft {
+    display: none;
+}
+
+:root[data-ember-threads] .commentarea .thing.comment > .midcol {
+    grid-area: votes;
+    float: none;
+    width: auto;
+    margin: 0.6rem 0.55rem 0 0;
+}
+
+:root[data-ember-threads] .commentarea .thing.comment > .entry {
+    grid-area: entry;
+    min-width: 0;
+    margin: 0;
+    padding: 0.5rem var(--gutter) 0.55rem 0;
+}
+
+:root[data-ember-threads] .commentarea .thing.comment > .child {
+    grid-area: child;
+    margin: 0 0 0 var(--indent);
+    padding: 0;
+    border-left: 0;
+}
+
+:root[data-ember-threads] .commentarea .thing.comment .thing.comment::before {
+    content: '';
+    grid-area: bar;
+    width: var(--rail);
+    margin: 0.6rem var(--rail-gap) 0.6rem 0;
+    border-radius: var(--rail);
+    background: var(--tone);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment {
+    --tone: var(--rail-1);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment .comment {
+    --tone: var(--rail-2);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment .comment .comment {
+    --tone: var(--rail-3);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment {
+    --tone: var(--rail-4);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment .comment {
+    --tone: var(--rail-5);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment .comment .comment {
+    --tone: var(--rail-6);
+}
+
+:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment .comment .comment .comment {
+    --tone: var(--rail-7);
+}
+
+:root[data-ember-threads] .commentarea .thing.comment > .entry > .tagline {
+    padding: 0.05rem 0 0.2rem;
+}
+
+:root[data-ember-threads] .commentarea .thing.comment > .entry .flat-list.buttons {
+    padding-top: 0.15rem;
+}
+
+:root[data-ember-threads] .commentarea .thing.morechildren,
+:root[data-ember-threads] .commentarea .deepthread {
+    margin: 0;
+    padding: 0.45rem 0 0.45rem var(--gutter);
+    border-top: 1px solid var(--border);
+}
+
+:root[data-ember-threads] .commentarea .thing.comment.collapsed > .entry {
+    opacity: 0.7;
+}
+
+/* Each author's name in their own color; the OP's is orange. */
+:root[data-ember-authors] a.author[data-ember-hue] {
+    color: hsl(var(--name-h, 210) var(--name-s) var(--name-l));
+}
+
+:root[data-ember-authors] a.author.submitter,
+:root[data-ember] .tagline .submitter {
+    color: var(--accent);
+}
+
+:root[data-ember] .tagline .moderator {
+    color: var(--rail-3);
+}
+
+/* New since your last visit: a faint accent wash and a "new" tag. */
+.thing.comment.ember-new > .entry {
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.thing.comment.ember-new > .entry > .tagline::after {
+    content: 'new';
+    margin-left: 0.5em;
+    padding: 0 0.4em;
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* "+6 new" beside a post's comments link, for threads you've read before. */
+#siteTable .entry .buttons a.ember-new-count {
+    margin-left: 0.35em;
+    padding: 0 0.4em;
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* The post the keys act on in a list; scrolling to it keeps a little of its neighbors in view. */
+#siteTable > .thing {
+    scroll-margin-block: 3rem;
+}
+
+/* The bar sits in the gutter left of the post (the margin and padding cancel out), clear of its rank. */
+#siteTable > .thing.ember-selected {
+    margin-left: -10px;
+    padding-left: 7px;
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+/* Where a jump lands. */
+.thing.comment.ember-focus > .entry {
+    animation: ember-land 0.9s ease-out;
+}
+
+@keyframes ember-land {
+    from {
+        box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--link) 22%, transparent);
+    }
+}
+
+/* ── Ember's own controls ───────────────────────────────── */
+
+#ember-nav {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 2147483000;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--raised);
+    box-shadow: 0 6px 24px var(--shadow);
+    color: var(--title);
+    font: 13px/1 var(--font);
+}
+
+#ember-nav button {
+    display: grid;
+    place-items: center;
+    min-width: 40px;
+    height: 36px;
+    margin: 0;
+    padding: 0 0.7rem;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--title);
+    font: inherit;
+    cursor: pointer;
+}
+
+#ember-nav button:hover {
+    background: var(--surface);
+}
+
+#ember-nav button[hidden] {
+    display: none;
+}
+
+#ember-nav svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#ember-nav .ember-nav-pos {
+    min-width: 5.5em;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+#ember-nav .ember-nav-new {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+}
+
+#ember-nav .ember-nav-new:hover {
+    background: var(--accent);
+    filter: brightness(1.1);
+}
+
+.ember-open-floating {
+    position: fixed;
+    top: 0.5rem;
+    right: 0.75rem;
+    z-index: 2147483000;
+}
+
+/* Settings: the dialog covers the screen, so a click outside the panel lands on it and closes it. */
+#ember-settings {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: 14px/1.45 var(--font);
+}
+
+#ember-settings[open] {
+    display: grid;
+    place-items: center;
+}
+
+#ember-settings::backdrop {
+    background: rgb(0 0 0 / 0.5);
+}
+
+#ember-settings .ember-panel {
+    display: flex;
+    flex-direction: column;
+    width: min(30rem, calc(100% - 2rem));
+    max-height: calc(100% - 2rem);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--raised);
+    box-shadow: 0 12px 40px var(--shadow);
+}
+
+#ember-settings header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+#ember-settings h2 {
+    margin: 0;
+    color: var(--title);
+    font-size: 17px;
+}
+
+#ember-settings h3 {
+    margin: 1rem 0 0.35rem 0.85rem;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#ember-settings h3:first-child {
+    margin-top: 0;
+}
+
+#ember-settings .ember-close {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 22px;
+    cursor: pointer;
+}
+
+#ember-settings .ember-body {
+    padding: 1rem 1.25rem 1.25rem;
+    overflow-y: auto;
+}
+
+#ember-settings .ember-group {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+#ember-settings .ember-row,
+#ember-settings .ember-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.55rem 0.85rem;
+    border: 0;
+    border-top: 1px solid var(--border);
+    color: var(--title);
+}
+
+#ember-settings .ember-row:first-child,
+#ember-settings .ember-option:first-child {
+    border-top: 0;
+}
+
+#ember-settings .ember-option {
+    justify-content: flex-start;
+    cursor: pointer;
+}
+
+#ember-settings input[type='radio'],
+#ember-settings input[type='checkbox'] {
+    accent-color: var(--accent);
+}
+
+#ember-settings small {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+#ember-settings .ember-swatch {
+    display: inline-grid;
+    place-items: center;
+    width: 2.2em;
+    height: 1.4em;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px rgb(128 128 128 / 0.35);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+#ember-settings [data-swatch='system'] {
+    background: linear-gradient(135deg, #101216 50%, #f6f6ef 50%);
+    color: #ff7a1a;
+}
+
+#ember-settings [data-swatch='dusk'] {
+    background: #101216;
+    color: #eceef1;
+    box-shadow: inset 0 -3px 0 #ff7a1a;
+}
+
+#ember-settings [data-swatch='dark'] {
+    background: #181a1b;
+    color: #e8e6e3;
+    box-shadow: inset 0 -3px 0 #e66a1f;
+}
+
+#ember-settings [data-swatch='dim'] {
+    background: #22272e;
+    color: #cdd9e5;
+    box-shadow: inset 0 -3px 0 #f0883e;
+}
+
+#ember-settings [data-swatch='black'] {
+    background: #000000;
+    color: #eceef1;
+    box-shadow: inset 0 -3px 0 #ff7a1a;
+}
+
+#ember-settings [data-swatch='light'] {
+    background: #f6f6ef;
+    color: #111111;
+    box-shadow: inset 0 -3px 0 #e05a00;
+}
+
+#ember-settings .ember-segmented {
+    display: block;
+}
+
+#ember-settings legend {
+    float: left;
+    width: 100%;
+    margin-bottom: 0.4rem;
+    padding: 0;
+}
+
+#ember-settings .ember-segmented > div {
+    display: flex;
+    clear: both;
+    padding: 2px;
+    border-radius: 8px;
+    background: var(--bg);
+}
+
+#ember-settings .ember-segmented label {
+    position: relative;
+    display: grid;
+    flex: 1 1 0;
+    place-items: center;
+    min-height: 1.9rem;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+#ember-settings .ember-segmented input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#ember-settings .ember-segmented label:has(input:checked) {
+    background: var(--raised);
+    box-shadow: 0 1px 3px var(--shadow);
+    color: var(--title);
+    font-weight: 600;
+}
+
+#ember-settings .ember-switch {
+    flex: none;
+    position: relative;
+    width: 2.6rem;
+    height: 1.5rem;
+    margin: 0;
+    border-radius: 999px;
+    background: var(--border);
+    appearance: none;
+    cursor: pointer;
+}
+
+#ember-settings .ember-switch::after {
+    content: '';
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    background: #ffffff;
+    transition: transform 0.15s;
+}
+
+#ember-settings .ember-switch:checked {
+    background: var(--accent);
+}
+
+#ember-settings .ember-switch:checked::after {
+    transform: translateX(1.1rem);
+}
+
+#ember-settings .ember-keys .ember-row {
+    justify-content: flex-start;
+}
+
+#ember-settings kbd {
+    min-width: 3.5rem;
+    color: var(--title);
+    font: 12px var(--mono);
+}
