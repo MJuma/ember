@@ -27,6 +27,16 @@ async function loadVisits(): Promise<Record<string, Visit>> {
     return visits && typeof visits === 'object' ? visits as Record<string, Visit> : {};
 }
 
+/** How many threads the reading history remembers (Settings › Data). */
+export async function countVisits(): Promise<number> {
+    return Object.keys(pruneVisits(await loadVisits(), Date.now())).length;
+}
+
+/** Forgets every thread you've read: new-comment highlights and "+N new" start over. */
+export function clearVisits(): Promise<void> {
+    return browser.storage.local.remove(VISITS_KEY);
+}
+
 /** A post's total comment count, from its row in a post list or at the top of its thread. */
 function commentCount(post: Element | null): number | undefined {
     const count = post instanceof HTMLElement ? Number.parseInt(post.dataset['commentsCount'] ?? '', 10) : Number.NaN;

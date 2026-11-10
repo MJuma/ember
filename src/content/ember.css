@@ -1,14 +1,18 @@
 /*
- * Ember: a dark skin for old.reddit.com, with colored comment threads. Everything keys off
- * attributes the content script sets on <html> at document start (from a cached copy of your
- * settings), so the theme is in place before the page first paints:
+ * Ember: a dark skin for old reddit, with colored comment threads. Everything keys off attributes
+ * the content script sets on <html> at document start (from a cached copy of your settings), so the
+ * theme is in place before the page first paints. It sets them only on old reddit's pages, so the
+ * redesign (on www.reddit.com) keeps its own look: every rule here needs one of them (or one of
+ * Ember's own ids and classes), never a bare :root or a :not([data-ember-…]).
  *   data-ember            Ember's theme styles the page (off when a subreddit's own styles are on)
- *   data-ember-theme      dusk | dark | dim | black | light
+ *   data-ember-theme      dusk | dark | dim | black | light (Midnight, Charcoal, Slate, Black, Paper)
  *   data-ember-width      full | wide | narrow
  *   data-ember-indent     compact | normal | wide
  *   data-ember-threads    flat comments with a colored bar per reply level
+ *   data-ember-thread-style  flat | cards (each reply in a box inside its parent's)
+ *   data-ember-bars       colorful | pastel | ocean | sunset | gray (the bars' palette)
  *   data-ember-authors    each author's name in their own color
- *   data-ember-sidebar    show the subreddit sidebar
+ *   data-ember-sidebar    show | hide the subreddit sidebar
  */
 
 /* ── Themes ─────────────────────────────────────────────── */
@@ -17,8 +21,11 @@
     color-scheme: dark;
 }
 
-/* The palette is always defined: Ember's own controls and comment bars use it either way. */
-:root {
+/*
+ * The palette is defined wherever Ember runs, theme or not: its own controls and comment bars use it.
+ * Not on a bare :root, which the redesign's own variables could lose to on www.reddit.com.
+ */
+:root[data-ember-theme] {
     --bg: #101216;
     --surface: #171a1f;
     --raised: #1d2128;
@@ -33,15 +40,8 @@
     --link-visited: #b39ddb;
     --upvote: #ff8b60;
     --downvote: #9494ff;
+    --green: #6cc070;
     --shadow: rgb(0 0 0 / 0.35);
-    --rail-0: #ff8a3d;
-    --rail-1: #4fb3d9;
-    --rail-2: #a78bfa;
-    --rail-3: #6cc070;
-    --rail-4: #f06292;
-    --rail-5: #e5c07b;
-    --rail-6: #5c9cf5;
-    --rail-7: #4dd0b5;
     --name-s: 62%;
     --name-l: 74%;
     --rail: 3px;
@@ -114,7 +114,31 @@
     --link-visited: #6f42c1;
     --upvote: #ff4500;
     --downvote: #7193ff;
+    --green: #3f9a45;
     --shadow: rgb(0 0 0 / 0.12);
+    --name-s: 55%;
+    --name-l: 36%;
+}
+
+/*
+ * Comment bars: one color per reply level. Colorful is the default; each palette suits dark and
+ * light themes alike, except Colorful and Pastel, which deepen on Paper (light). The swatches in
+ * settings carry data-bars, so they use the same colors.
+ */
+:root[data-ember-theme],
+.ember-bars[data-bars='colorful'] {
+    --rail-0: #ff8a3d;
+    --rail-1: #4fb3d9;
+    --rail-2: #a78bfa;
+    --rail-3: #6cc070;
+    --rail-4: #f06292;
+    --rail-5: #e5c07b;
+    --rail-6: #5c9cf5;
+    --rail-7: #4dd0b5;
+}
+
+:root[data-ember-theme='light'],
+:root[data-ember-theme='light'] .ember-bars[data-bars='colorful'] {
     --rail-0: #e8710a;
     --rail-1: #1b8fbf;
     --rail-2: #7c5cd6;
@@ -123,8 +147,67 @@
     --rail-5: #b8901f;
     --rail-6: #2f6fd6;
     --rail-7: #1f9e86;
-    --name-s: 55%;
-    --name-l: 36%;
+}
+
+:root[data-ember-bars='pastel'],
+.ember-bars[data-bars='pastel'] {
+    --rail-0: #f5b38a;
+    --rail-1: #9fd3e8;
+    --rail-2: #c7b6f5;
+    --rail-3: #a8dcae;
+    --rail-4: #f3a9c4;
+    --rail-5: #efd99a;
+    --rail-6: #a9c3f5;
+    --rail-7: #9fe0d0;
+}
+
+:root[data-ember-theme='light'][data-ember-bars='pastel'],
+:root[data-ember-theme='light'] .ember-bars[data-bars='pastel'] {
+    --rail-0: #e8935f;
+    --rail-1: #6fb3cf;
+    --rail-2: #a38ee6;
+    --rail-3: #7fbf86;
+    --rail-4: #e384a6;
+    --rail-5: #d4b45a;
+    --rail-6: #7d9ee6;
+    --rail-7: #6cc3ad;
+}
+
+:root[data-ember-bars='ocean'],
+.ember-bars[data-bars='ocean'] {
+    --rail-0: #3b8fd9;
+    --rail-1: #23b5a6;
+    --rail-2: #6c7be0;
+    --rail-3: #3fb4d8;
+    --rail-4: #2f6fbf;
+    --rail-5: #4cc28d;
+    --rail-6: #8a7ce6;
+    --rail-7: #2aa0b8;
+}
+
+:root[data-ember-bars='sunset'],
+.ember-bars[data-bars='sunset'] {
+    --rail-0: #f07a3a;
+    --rail-1: #e5534b;
+    --rail-2: #f2a93b;
+    --rail-3: #d9578f;
+    --rail-4: #f28c5b;
+    --rail-5: #c2453a;
+    --rail-6: #e8c04a;
+    --rail-7: #e06a9a;
+}
+
+/* Two grays, alternating, so neighboring levels still differ. */
+:root[data-ember-bars='gray'],
+.ember-bars[data-bars='gray'] {
+    --rail-0: var(--muted);
+    --rail-1: color-mix(in srgb, var(--muted) 55%, var(--bg));
+    --rail-2: var(--muted);
+    --rail-3: color-mix(in srgb, var(--muted) 55%, var(--bg));
+    --rail-4: var(--muted);
+    --rail-5: color-mix(in srgb, var(--muted) 55%, var(--bg));
+    --rail-6: var(--muted);
+    --rail-7: color-mix(in srgb, var(--muted) 55%, var(--bg));
 }
 
 :root[data-ember-indent='compact'] {
@@ -256,7 +339,7 @@
     color: var(--text);
 }
 
-.redesign-beta-optin,
+:root[data-ember-theme] .redesign-beta-optin,
 :root[data-ember] .promotedlink,
 :root[data-ember] .promoted,
 :root[data-ember] #ad_main,
@@ -336,48 +419,228 @@
 
 /* ── Layout ─────────────────────────────────────────────── */
 
-:root:not([data-ember-sidebar]) .side {
+:root[data-ember-sidebar='hide'] .side {
     display: none;
 }
 
-/* Ember's stylesheet loses ties with Reddit's, so these name the chooser classes Reddit's margins use. */
-:root:not([data-ember-sidebar]) body > .content,
-:root:not([data-ember-sidebar]) body.with-listing-chooser > .content,
-:root:not([data-ember-sidebar]) body.with-listing-chooser.listing-chooser-collapsed > .content {
+/*
+ * One column, centered: with the sidebar hidden, or on pages that have none (the inbox, preferences).
+ * Ember's stylesheet loses ties with Reddit's, so these name the chooser classes Reddit's margins use.
+ */
+:root:is([data-ember-sidebar='hide'], [data-ember-sidebar='show']:not(:has(body > .side))) body > .content,
+:root:is([data-ember-sidebar='hide'], [data-ember-sidebar='show']:not(:has(body > .side))) body.with-listing-chooser > .content,
+:root:is([data-ember-sidebar='hide'], [data-ember-sidebar='show']:not(:has(body > .side))) body.with-listing-chooser.listing-chooser-collapsed > .content {
     margin: 0 auto;
     padding: 0 var(--gutter);
 }
 
-:root:not([data-ember-sidebar])[data-ember-width='wide'] body > .content {
+:root:is([data-ember-sidebar='hide'], [data-ember-sidebar='show']:not(:has(body > .side)))[data-ember-width='wide'] body > .content {
     max-width: 85%;
 }
 
-:root:not([data-ember-sidebar])[data-ember-width='narrow'] body > .content {
+:root:is([data-ember-sidebar='hide'], [data-ember-sidebar='show']:not(:has(body > .side)))[data-ember-width='narrow'] body > .content {
     max-width: 52rem;
 }
 
 /* The multireddit chooser, the collapsed bar down the left of the homepage, and the room it takes. */
-.listing-chooser {
+:root[data-ember-sidebar] .listing-chooser {
     display: none !important;
 }
 
-:root[data-ember-sidebar] body.with-listing-chooser > .content,
-:root[data-ember-sidebar] body.with-listing-chooser.listing-chooser-collapsed > .content {
-    margin-left: 5px;
-}
-
-:root body.with-listing-chooser .footer-parent,
-:root body.with-listing-chooser.listing-chooser-collapsed .footer-parent {
+:root[data-ember-sidebar] body.with-listing-chooser .footer-parent,
+:root[data-ember-sidebar] body.with-listing-chooser.listing-chooser-collapsed .footer-parent {
     margin-left: 0;
 }
 
-:root[data-ember] .side,
-:root[data-ember] .side .md,
-:root[data-ember] .side .titlebox,
-:root[data-ember] .linkinfo {
-    border-color: var(--border);
-    background: var(--bg);
+/* ── Sidebar ────────────────────────────────────────────── */
+
+/*
+ * With the sidebar, the page (posts or comments, then the sidebar) takes the chosen width, centered.
+ * Reddit floats the sidebar right at 300px, and the content's right margin leaves room for it. Wide
+ * is 92% here (85% without the sidebar), since the sidebar takes 300px of it.
+ */
+:root[data-ember-sidebar='show']:has(body > .side) {
+    --page-pad: var(--gutter);
+    --side-gap: 0.75rem;
+}
+
+:root[data-ember-sidebar='show'][data-ember-width='wide']:has(body > .side) {
+    --page-pad: max(var(--gutter), 4%);
+}
+
+:root[data-ember-sidebar='show'][data-ember-width='narrow']:has(body > .side) {
+    --page-pad: max(var(--gutter), (100% - 52rem - 300px - var(--side-gap)) / 2);
+}
+
+:root[data-ember-sidebar='show']:has(body > .side) body > .side {
+    margin: 0.6rem var(--page-pad) 0 0;
+}
+
+/* The content stops before the sidebar, so nothing in it (banners, wide media) can run underneath. */
+:root[data-ember-sidebar='show']:has(body > .side) body > .content,
+:root[data-ember-sidebar='show']:has(body > .side) body.with-listing-chooser > .content,
+:root[data-ember-sidebar='show']:has(body > .side) body.with-listing-chooser.listing-chooser-collapsed > .content {
+    margin-right: calc(var(--page-pad) + 300px + var(--side-gap));
+    margin-left: var(--page-pad);
+}
+
+/* Reddit leaves room for its sidebar inside the content too (305–325px); Ember already has. */
+:root[data-ember-sidebar] body > .content :is(.infobar, .panestack-title, .menuarea, #noresults, .searchpane, .aboutpage, .image-preview-list, .sheets, .wiki-page-content) {
+    margin-right: 0;
+}
+
+/* Each part of the sidebar is a card, like Ember's settings: the subreddit, the post's details, moderators. */
+:root[data-ember] .side {
+    background: transparent;
     color: var(--text);
+}
+
+:root[data-ember] .side > .spacer {
+    margin: 0 0 0.75rem;
+}
+
+:root[data-ember] .side .titlebox,
+:root[data-ember] .side .linkinfo,
+:root[data-ember] .side .side-message,
+:root[data-ember] .side .sidecontentbox .content {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font);
+}
+
+:root[data-ember] .side .md {
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* The subreddit: its name, join or leave, your flair, its description, and when it started. */
+:root[data-ember] .side .titlebox h1.redditname,
+:root[data-ember] .side .titlebox h1.redditname a {
+    color: var(--title);
+    font: 700 17px/1.3 var(--font);
+}
+
+/* Join and leave, here and in search results. */
+:root[data-ember] .fancy-toggle-button .active {
+    padding: 0.15rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--raised);
+    color: var(--title);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+:root[data-ember] .fancy-toggle-button .active.add {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+:root[data-ember] .side .titlebox form.toggle,
+:root[data-ember] .side .titlebox .leavemoderator {
+    background: transparent;
+    color: var(--muted);
+}
+
+/* Its age floats right; when the line wraps, the float stays in the card. */
+:root[data-ember] .side .titlebox .bottom {
+    display: flow-root;
+    margin-top: 0.6rem;
+    padding-top: 0.4rem;
+    border-top-color: var(--border);
+    color: var(--muted);
+}
+
+/* The post's details on a thread: when it was posted, its points and its shortlink. */
+:root[data-ember] .side .linkinfo {
+    font-size: 13px;
+}
+
+:root[data-ember] .side .linkinfo .score .number {
+    color: var(--title);
+}
+
+:root[data-ember] .side .linkinfo .shortlink input {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--mono);
+}
+
+/* Section titles (Moderators) sit above their card, like Ember's settings headings. */
+:root[data-ember] .side .sidecontentbox .title h1 {
+    margin: 0 0 0.35rem 0.85rem;
+    color: var(--muted);
+    font: 600 11px/1.4 var(--font);
+    letter-spacing: 0.04em;
+}
+
+:root[data-ember] .side .sidecontentbox .content li {
+    padding: 0.1rem 0;
+}
+
+:root[data-ember] .side .sidecontentbox .more a {
+    color: var(--muted);
+}
+
+/* Reddit's big blue buttons (submit, create a subreddit, message the mods), as Ember's buttons. */
+:root[data-ember] .side .morelink,
+:root[data-ember] .side .c-btn {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--raised);
+    color: var(--title);
+    transition: border-color 0.15s;
+}
+
+:root[data-ember] .side .morelink a,
+:root[data-ember] .side .c-btn {
+    box-sizing: border-box;
+    padding: 0.45rem 0.75rem;
+    color: var(--title);
+    font: 600 14px/1.4 var(--font);
+    letter-spacing: normal;
+    text-align: center;
+    text-transform: none;
+}
+
+:root[data-ember] .side .morelink:hover,
+:root[data-ember] .side .c-btn:hover {
+    border-color: var(--accent);
+}
+
+:root[data-ember] .side .morelink:hover a,
+:root[data-ember] .side .c-btn:hover {
+    color: var(--accent);
+}
+
+/* The button's arrow tab, and the white teaser box under "Create your own subreddit". */
+:root[data-ember] .side .morelink .nub,
+:root[data-ember] .side .sidebox.create .spacer {
+    display: none;
+}
+
+/* Search's magnifier (here and on the search page), in the theme's colors instead of Reddit's sprite. */
+:root[data-ember] #search input[type='submit'] {
+    background: var(--muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5L20 20'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+:root[data-ember] #search input[type='submit']:hover {
+    background: var(--title);
+}
+
+:root[data-ember] .side .recommend-box .rec-item {
+    border-color: var(--border);
+    background: var(--surface);
 }
 
 :root[data-ember] .footer-parent,
@@ -461,7 +724,7 @@
 
 :root[data-ember] .thing.stickied a.title,
 :root[data-ember] .stickied-tagline {
-    color: var(--rail-3);
+    color: var(--green);
 }
 
 :root[data-ember] .linkflairlabel,
@@ -571,6 +834,34 @@
     border-left-color: var(--border);
 }
 
+/*
+ * Reddit's highlighted comment bodies are pale boxes meant for its white page: the comment a permalink
+ * points at (yellow), one you just posted (blue), and grayed-out text. Ember draws them in its colors;
+ * the linked comment keeps a tint, like where a jump lands.
+ */
+:root[data-ember] .usertext.border .usertext-body,
+:root[data-ember] .commentbody.border {
+    padding: 0.1rem 0.6rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+:root[data-ember] .new-comment .usertext-body {
+    border-color: var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+}
+
+:root[data-ember] .usertext.grayed .usertext-body {
+    background: var(--surface);
+    color: var(--muted);
+}
+
+/* Reddit's rule for code in those boxes outranks Ember's general one. */
+:root[data-ember] :is(.usertext.border, .new-comment) .md :is(code, pre) {
+    background: var(--surface);
+}
+
 :root[data-ember] .morecomments a,
 :root[data-ember] .deepthread a {
     color: var(--accent);
@@ -589,7 +880,7 @@
 }
 
 /* A comment's header is its collapse target (outside its links); the text below stays selectable. */
-.commentarea .comment > .entry > .tagline {
+:root[data-ember-theme] .commentarea .comment > .entry > .tagline {
     cursor: pointer;
 }
 
@@ -598,7 +889,7 @@
  * bar in its level's color beside each reply. Each comment is a grid: bar, votes, then its content,
  * with its replies on a row below, indented.
  */
-:root[data-ember-threads] .commentarea .thing.comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment {
     display: grid;
     grid-template-areas: 'bar votes entry' 'child child child';
     grid-template-columns: auto auto minmax(0, 1fr);
@@ -606,43 +897,45 @@
     padding: 0;
     border-top: 1px solid var(--border);
     --tone: var(--rail-0);
+    /* The shade of its box in Cards; it alternates by level. */
+    --box: var(--box-even);
 }
 
-:root[data-ember-threads] .commentarea > .sitetable > .thing.comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) > .sitetable > .thing.comment {
     padding-left: var(--gutter);
 }
 
-:root[data-ember-threads] .commentarea > .sitetable > .thing.comment + .thing.comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) > .sitetable > .thing.comment + .thing.comment {
     margin-top: 0.5rem;
 }
 
-:root[data-ember-threads] .commentarea .thing.comment > .parent,
-:root[data-ember-threads] .commentarea .thing.comment > .clearleft {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .parent,
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .clearleft {
     display: none;
 }
 
-:root[data-ember-threads] .commentarea .thing.comment > .midcol {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .midcol {
     grid-area: votes;
     float: none;
     width: auto;
     margin: 0.6rem 0.55rem 0 0;
 }
 
-:root[data-ember-threads] .commentarea .thing.comment > .entry {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .entry {
     grid-area: entry;
     min-width: 0;
     margin: 0;
     padding: 0.5rem var(--gutter) 0.55rem 0;
 }
 
-:root[data-ember-threads] .commentarea .thing.comment > .child {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .child {
     grid-area: child;
     margin: 0 0 0 var(--indent);
     padding: 0;
     border-left: 0;
 }
 
-:root[data-ember-threads] .commentarea .thing.comment .thing.comment::before {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment .thing.comment::before {
     content: '';
     grid-area: bar;
     width: var(--rail);
@@ -651,51 +944,114 @@
     background: var(--tone);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment {
     --tone: var(--rail-1);
+    --box: var(--box-odd);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment .comment {
     --tone: var(--rail-2);
+    --box: var(--box-even);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment .comment .comment {
     --tone: var(--rail-3);
+    --box: var(--box-odd);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment .comment .comment .comment {
     --tone: var(--rail-4);
+    --box: var(--box-even);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment .comment .comment .comment .comment {
     --tone: var(--rail-5);
+    --box: var(--box-odd);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment .comment .comment .comment .comment .comment {
     --tone: var(--rail-6);
+    --box: var(--box-even);
 }
 
-:root[data-ember-threads] .commentarea .comment .comment .comment .comment .comment .comment .comment .comment {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .comment .comment .comment .comment .comment .comment .comment .comment {
     --tone: var(--rail-7);
+    --box: var(--box-odd);
 }
 
-:root[data-ember-threads] .commentarea .thing.comment > .entry > .tagline {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .entry > .tagline {
     padding: 0.05rem 0 0.2rem;
 }
 
-:root[data-ember-threads] .commentarea .thing.comment > .entry .flat-list.buttons {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment > .entry .flat-list.buttons {
     padding-top: 0.15rem;
 }
 
-:root[data-ember-threads] .commentarea .thing.morechildren,
-:root[data-ember-threads] .commentarea .deepthread {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.morechildren,
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .deepthread {
     margin: 0;
     padding: 0.45rem 0 0.45rem var(--gutter);
     border-top: 1px solid var(--border);
 }
 
-:root[data-ember-threads] .commentarea .thing.comment.collapsed > .entry {
+:root[data-ember-threads] :is(.commentarea, .ember-sample-comments) .thing.comment.collapsed > .entry {
     opacity: 0.7;
+}
+
+/*
+ * Thread style › Cards: each top-level thread in a card, and each reply in a box inside its parent's,
+ * shaded by level, with its bar's color as the box's left edge. Reddit nests replies inside their
+ * parent, so each box sits in its parent's, with space under it.
+ */
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) {
+    --box-even: var(--surface);
+    --box-odd: color-mix(in srgb, var(--surface) 50%, var(--bg));
+    --box-border: var(--border);
+    --card-pad: 0.75rem;
+    --box-gap: 0.5rem;
+}
+
+/* Under a subreddit's own look, boxes shade whatever its background is instead of using Ember's palette. */
+:root:not([data-ember])[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) {
+    --box-even: rgb(128 128 128 / 0.05);
+    --box-odd: rgb(128 128 128 / 0.05);
+    --box-border: rgb(128 128 128 / 0.3);
+}
+
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) .thing.comment {
+    border: 1px solid var(--box-border);
+    border-radius: 8px;
+    background: var(--box);
+}
+
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) > .sitetable > .thing.comment {
+    margin: 0 0 0.75rem;
+    padding-left: var(--card-pad);
+    border-radius: 10px;
+}
+
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) .thing.comment .thing.comment {
+    margin: 0 var(--card-pad) var(--box-gap) 0;
+    padding-left: var(--rail-gap);
+    border-left: 2px solid color-mix(in srgb, var(--tone) 60%, var(--box));
+}
+
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) .thing.comment .thing.comment::before {
+    content: none;
+}
+
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) .thing.comment :is(.thing.morechildren, .deepthread) {
+    padding: 0 0 var(--box-gap);
+    border-top: 0;
+}
+
+/* A new comment's whole box takes the wash, not just its text (its replies' boxes cover their part). */
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) .thing.comment.ember-new {
+    background: linear-gradient(var(--new-wash), var(--new-wash)), var(--box);
+}
+
+:root[data-ember-threads][data-ember-thread-style='cards'] :is(.commentarea, .ember-sample-comments) .thing.comment.ember-new > .entry {
+    background: none;
 }
 
 /* Each author's name in their own color; the OP's is orange. */
@@ -709,13 +1065,17 @@
 }
 
 :root[data-ember] .tagline .moderator {
-    color: var(--rail-3);
+    color: var(--green);
 }
 
 /* New since your last visit: a faint accent wash and a "new" tag. */
+.thing.comment.ember-new {
+    --new-wash: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
 .thing.comment.ember-new > .entry {
     border-radius: 6px;
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    background: var(--new-wash);
 }
 
 .thing.comment.ember-new > .entry > .tagline::after {
@@ -730,7 +1090,8 @@
 }
 
 /* "+6 new" beside a post's comments link, for threads you've read before. */
-#siteTable .entry .buttons a.ember-new-count {
+#siteTable .entry .buttons a.ember-new-count,
+#ember-settings .entry .buttons a.ember-new-count {
     margin-left: 0.35em;
     padding: 0 0.4em;
     border-radius: 4px;
@@ -742,7 +1103,7 @@
 }
 
 /* The post the keys act on in a list; scrolling to it keeps a little of its neighbors in view. */
-#siteTable > .thing {
+:root[data-ember-theme] #siteTable > .thing {
     scroll-margin-block: 3rem;
 }
 
@@ -763,6 +1124,222 @@
     from {
         box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--link) 22%, transparent);
     }
+}
+
+/* ── Reddit's other pages and boxes ────────────────────── */
+
+/*
+ * Flairs a subreddit colors itself (an inline background) keep Reddit's black or white text, which it
+ * picks for that color. Uncolored ones have a transparent inline background and keep Ember's.
+ */
+:root[data-ember] :is(.linkflairlabel, .flair, .flairrichtext).flaircolordark[style*='background']:not([style*='transparent']) {
+    color: #000000;
+}
+
+:root[data-ember] :is(.linkflairlabel, .flair, .flairrichtext).flaircolorlight[style*='background']:not([style*='transparent']) {
+    color: #ffffff;
+}
+
+/* Picking your flair. */
+:root[data-ember] .flairselector h2 {
+    background: var(--surface);
+}
+
+:root[data-ember] .flairselector li:hover {
+    border-color: var(--border);
+    background-color: var(--surface);
+}
+
+/* The banner on archived, locked and other closed threads (its colored strip and icon stay). */
+:root[data-ember] .reddit-infobar {
+    border-color: var(--border);
+    border-radius: 8px;
+    background-color: var(--surface);
+    color: var(--text);
+}
+
+/* A profile's trophy case; Reddit forces the names black with !important. */
+:root[data-ember] .trophy-area .trophy-name {
+    color: var(--title) !important;
+}
+
+:root[data-ember] .trophy-area .trophy-description {
+    color: var(--muted);
+}
+
+/* Wiki pages: the sidebar's menu and its collapse button. */
+:root[data-ember] .icon-menu a {
+    background-color: transparent;
+}
+
+:root[data-ember] .sidecontentbox .collapse-button {
+    border-color: var(--border);
+    background: var(--raised);
+    color: var(--muted);
+}
+
+/* The inbox: unread messages get the new-comment wash, and the sender's label is a quiet tag. */
+:root[data-ember] .message.new > .entry {
+    border-color: var(--border);
+    border-radius: 8px;
+    background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+:root[data-ember] .message .subject .correspondent {
+    border-color: var(--border);
+    border-radius: 4px;
+    background-color: var(--raised);
+    color: var(--muted);
+}
+
+/*
+ * The reply box's formatting help: a white table whose header row is yellow through an inline style,
+ * which only !important beats.
+ */
+:root[data-ember] .usertext .markhelp table {
+    background: var(--surface);
+}
+
+:root[data-ember] .usertext .markhelp :is(tr, td) {
+    border-color: var(--border);
+}
+
+:root[data-ember] .usertext .markhelp tr[style] {
+    background-color: var(--raised) !important;
+    color: var(--muted);
+}
+
+:root[data-ember] .usertext .markhelp .spaces {
+    background-color: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+/* Search results. */
+:root[data-ember] #searchmenu,
+:root[data-ember] .searchfacets {
+    border-color: var(--border);
+    background: var(--surface);
+    box-shadow: none;
+}
+
+:root[data-ember] #searchmenu .searchlabel {
+    background: transparent;
+    color: var(--title);
+}
+
+:root[data-ember] .searchpane {
+    background: none;
+}
+
+:root[data-ember] .search-result-body {
+    color: var(--text);
+}
+
+:root[data-ember] .search-result-group-header {
+    border-color: var(--border);
+    color: var(--muted);
+}
+
+:root[data-ember] .search-result.visited :is(.search-title, .search-link, mark) {
+    color: var(--link-visited);
+}
+
+:root[data-ember] .search-expando-button {
+    color: var(--link);
+}
+
+/* A long result fades out at the bottom, into the page rather than into white. */
+:root[data-ember] .search-expando.collapsed::before {
+    background: linear-gradient(transparent, var(--bg));
+}
+
+/* The submit page: each field a card, like Ember's settings. */
+:root[data-ember] .roundfield {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background-color: var(--surface);
+    color: var(--text);
+}
+
+:root[data-ember] .content.submit .info-notice {
+    border-color: var(--border);
+    border-radius: 10px;
+    background-color: var(--surface);
+}
+
+:root[data-ember] .formtabs-content {
+    border-top: 1px solid var(--border);
+}
+
+:root[data-ember] #newlink-with-image-upload .image-upload-drop-target {
+    border-color: var(--border);
+    border-radius: 8px;
+    background-color: var(--bg);
+}
+
+:root[data-ember] #newlink-with-image-upload .file-drop-label {
+    color: var(--muted);
+}
+
+/* Dialogs (report, and the like) and interstitials (NSFW, quarantined subreddits). */
+:root[data-ember] .modal-header,
+:root[data-ember] .modal-footer {
+    border-color: var(--border);
+    background-color: var(--surface);
+}
+
+:root[data-ember] .modal-content :is(.modal-header-title, .report-reason-display, .report-form-warning-desc, .report-form-big-content-policy, .report-form-last-step-text) {
+    color: var(--text);
+}
+
+:root[data-ember] .report-modal .report-form-warning {
+    border-color: var(--border);
+    background-color: var(--raised);
+}
+
+:root[data-ember] .interstitial-subreddit-description {
+    border-radius: 8px;
+    background-color: var(--surface);
+}
+
+/* Reddit's buttons (choose a file, continue): primary in the accent, secondary like Ember's buttons. */
+:root[data-ember] .c-btn-primary {
+    border-color: transparent;
+    background-color: var(--accent);
+    color: var(--on-accent);
+}
+
+:root[data-ember] .c-btn-secondary {
+    border-color: var(--border);
+    background-color: var(--raised);
+    color: var(--title);
+}
+
+:root[data-ember] :is(.c-btn-primary, .c-btn-secondary):hover {
+    filter: brightness(1.1);
+}
+
+/* r/all's filter: Reddit's + and × icons, drawn in the theme's colors. */
+:root[data-ember] :is(.multi-details, .filtered-details) :is(button.add, button.remove-sr) {
+    background: var(--muted);
+    mask: var(--glyph) center / contain no-repeat;
+}
+
+:root[data-ember] :is(.multi-details, .filtered-details) button.add {
+    --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E");
+}
+
+:root[data-ember] :is(.multi-details, .filtered-details) button.remove-sr {
+    --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+}
+
+/* Dark themes dim pictures a little so they don't glare against the page; hovering shows them as they are. */
+:root[data-ember]:not([data-ember-theme='light']) :is(.thumbnail img, .expando img, .media-preview img, .md img) {
+    filter: brightness(0.88);
+    transition: filter 0.2s;
+}
+
+:root[data-ember]:not([data-ember-theme='light']) :is(.thumbnail img, .expando img, .media-preview img, .md img):hover {
+    filter: none;
 }
 
 /* ── Ember's own controls ───────────────────────────────── */
@@ -923,10 +1500,70 @@
 }
 
 #ember-settings .ember-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: var(--surface);
+}
+
+/* Settings that only apply with Colored threads on. */
+#ember-settings fieldset:disabled {
+    opacity: 0.45;
+}
+
+#ember-settings fieldset:disabled label {
+    cursor: default;
+}
+
+/*
+ * The live sample, pinned above the settings: a post and a few replies, drawn by Reddit's styles and
+ * Ember's with the current settings.
+ */
+#ember-settings .ember-sample {
+    flex: none;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+#ember-settings .ember-sample-frame {
+    overflow: hidden;
+    padding: 0.25rem 0 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    font: 13px/1.45 var(--font);
+}
+
+/* Reddit's own white page, when a subreddit's styles replace Ember's theme. */
+:root:not([data-ember]) #ember-settings .ember-sample-frame {
+    background: #ffffff;
+    color: #222222;
+}
+
+#ember-settings .ember-sample .thing.link {
+    border-bottom: 0;
+}
+
+#ember-settings .ember-sample-comments {
+    margin-top: 0.4rem;
+}
+
+:root[data-ember-thread-style='cards'] #ember-settings .ember-sample-comments {
+    padding: 0 0.6rem;
+}
+
+#ember-settings .ember-sample [hidden] {
+    display: none !important;
+}
+
+/* Short windows keep the room for the settings themselves. */
+@media (max-height: 720px) {
+    #ember-settings .ember-sample {
+        display: none;
+    }
 }
 
 #ember-settings .ember-row,
@@ -1009,6 +1646,59 @@
     box-shadow: inset 0 -3px 0 #e05a00;
 }
 
+#ember-settings .ember-bars {
+    display: inline-flex;
+    flex: none;
+    gap: 3px;
+    width: 2.2em;
+    height: 1.2em;
+}
+
+#ember-settings .ember-bars span {
+    width: 4px;
+    border-radius: 2px;
+    background: var(--rail-0);
+}
+
+#ember-settings .ember-bars span:nth-child(2) {
+    background: var(--rail-1);
+}
+
+#ember-settings .ember-bars span:nth-child(3) {
+    background: var(--rail-2);
+}
+
+#ember-settings .ember-bars span:nth-child(4) {
+    background: var(--rail-3);
+}
+
+#ember-settings .ember-bars span:nth-child(5) {
+    background: var(--rail-4);
+}
+
+/* Data's buttons. */
+#ember-settings .ember-action {
+    flex: none;
+    margin: 0;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--raised);
+    color: var(--title);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+#ember-settings .ember-action:hover:not(:disabled) {
+    border-color: var(--muted);
+}
+
+#ember-settings .ember-action:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
 #ember-settings .ember-segmented {
     display: block;
 }
@@ -1085,8 +1775,21 @@
     transform: translateX(1.1rem);
 }
 
-#ember-settings .ember-keys .ember-row {
+#ember-settings .ember-keys .ember-row:not(.ember-switch-row) {
     justify-content: flex-start;
+}
+
+/* The keys under their switch: part of the same card, greyed out while the switch is off. */
+#ember-settings .ember-key-rows {
+    display: contents;
+}
+
+#ember-settings .ember-key-rows > .ember-row:first-child {
+    border-top: 1px solid var(--border);
+}
+
+#ember-settings .ember-key-rows:disabled > .ember-row {
+    opacity: 0.45;
 }
 
 #ember-settings kbd {

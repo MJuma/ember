@@ -33,9 +33,11 @@ function apply(next: Settings): void {
     root.dataset['emberTheme'] = resolveTheme(next.theme, prefersLight.matches);
     root.dataset['emberWidth'] = next.width;
     root.dataset['emberIndent'] = next.indent;
+    root.dataset['emberThreadStyle'] = next.threadStyle;
+    root.dataset['emberBars'] = next.bars;
     root.toggleAttribute('data-ember-threads', next.coloredThreads);
     root.toggleAttribute('data-ember-authors', next.authorColors);
-    root.toggleAttribute('data-ember-sidebar', next.showSidebar);
+    root.dataset['emberSidebar'] = next.showSidebar ? 'show' : 'hide';
     try {
         localStorage.setItem(MIRROR_KEY, JSON.stringify(encodeSettings(next)));
     } catch {

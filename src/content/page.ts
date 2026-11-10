@@ -52,8 +52,9 @@ function installKeys(thread: boolean): void {
             openPanel();
             return;
         }
+        // `?` above always opens settings, so the keys can be turned back on from the keyboard.
         if (thread) {
-            const command = THREAD_KEYS[event.key];
+            const command = settings().threadKeys ? THREAD_KEYS[event.key] : undefined;
             if (command) {
                 event.preventDefault();
                 run(command);
@@ -61,7 +62,7 @@ function installKeys(thread: boolean): void {
             return;
         }
         const name = event.key === 'Enter' && event.shiftKey ? 'Shift+Enter' : event.key;
-        const command = LIST_KEYS[name];
+        const command = settings().listKeys ? LIST_KEYS[name] : undefined;
         if (command && !(event.key === 'Enter' && isControl(event.target))) {
             event.preventDefault();
             runList(command);

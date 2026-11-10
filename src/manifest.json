@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Ember",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "description": "A dark skin for old.reddit.com, with colored comment threads.",
     "icons": {
         "48": "icons/ember.svg",
@@ -10,7 +10,8 @@
     "content_scripts": [
         {
             "matches": [
-                "https://old.reddit.com/*"
+                "https://old.reddit.com/*",
+                "https://www.reddit.com/*"
             ],
             "css": [
                 "ember.css"

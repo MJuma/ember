@@ -14,7 +14,7 @@ describe('settings', () => {
         expect(decodeSettings(encodeSettings(changed))).toEqual(changed);
     });
 
-    it('follows the system between Dusk and Light', () => {
+    it('follows the system between Midnight and Paper', () => {
         expect(resolveTheme('system', true)).toBe('light');
         expect(resolveTheme('system', false)).toBe('dusk');
         expect(resolveTheme('dim', true)).toBe('dim');

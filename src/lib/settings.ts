@@ -28,11 +28,19 @@ export const SCHEMA = {
     indent: choice(['compact', 'normal', 'wide'], 'normal'),
     /** Comments flat with a colored bar per reply level (off: old reddit's nested boxes). */
     coloredThreads: bool(true),
+    /** How colored threads look: flat, or each reply in a box inside its parent's. */
+    threadStyle: choice(['flat', 'cards'], 'flat'),
+    /** The colors of the bars beside replies, by depth. */
+    bars: choice(['colorful', 'pastel', 'ocean', 'sunset', 'gray'], 'colorful'),
     /** Each author's name in their own color. */
     authorColors: bool(true),
     /** Highlight comments posted since your last visit. */
     newComments: bool(true),
-    showSidebar: bool(false),
+    showSidebar: bool(true),
+    /** Post lists: j/k (or a click) select a post, and keys open, vote on, save or hide it. */
+    listKeys: bool(true),
+    /** Threads: keys jump between comments and collapse them. */
+    threadKeys: bool(true),
     /** Subreddits' own stylesheets (off: Ember's theme everywhere). */
     subredditStyles: bool(false),
 } as const;
@@ -75,7 +83,7 @@ export function encodeSettings(values: Settings): Partial<Settings> {
     return changed;
 }
 
-/** The theme actually shown: "system" follows the OS between Dusk and Light. */
+/** The theme actually shown: "system" (Automatic) follows the OS between dusk (Midnight) and light (Paper). */
 export function resolveTheme(theme: Theme, prefersLight: boolean): Exclude<Theme, 'system'> {
     if (theme === 'system') {
         return prefersLight ? 'light' : 'dusk';

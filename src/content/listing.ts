@@ -1,4 +1,6 @@
 /** Post lists (front page, subreddits, user pages): a selected post the keys act on, and expand all. */
+import { onSettings, settings } from './store';
+
 
 export type ListCommand = 'next' | 'prev' | 'comments' | 'comments-tab' | 'open' | 'open-tab' | 'expand' | 'expand-all' | 'up' | 'down' | 'save' | 'hide';
 
@@ -132,8 +134,14 @@ export function enhanceList(): void {
     // clicks posts' buttons too.
     document.querySelector('#siteTable')?.addEventListener('click', (event) => {
         const row = event.target instanceof Element ? event.target.closest<HTMLElement>('#siteTable > .thing') : null;
-        if (row && event.isTrusted) {
+        if (row && event.isTrusted && settings().listKeys) {
             select(row, false);
+        }
+    });
+    onSettings((next) => {
+        if (!next.listKeys) {
+            selected?.classList.remove('ember-selected');
+            selected = undefined;
         }
     });
     const tabs = document.querySelector('#header .tabmenu');
