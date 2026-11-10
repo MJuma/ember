@@ -59,10 +59,42 @@ Ember makes no network requests and collects nothing. It needs only the `storage
 
 ## Development
 
+### Setup
+
+The same on macOS and Linux. You need Firefox, [Node.js](https://nodejs.org/) 22 or newer, and [pnpm](https://pnpm.io/installation).
+
+1. Install pnpm, if you don't have it. Any recent version works: in this repo it switches itself to the version `package.json` pins.
+
+   ```bash
+   npm install -g pnpm --allow-scripts=pnpm
+   ```
+
+   If npm's global folder needs `sudo` (Node from a Linux package manager), add `--prefix ~/.local` and make sure `~/.local/bin` is on your `PATH`. Without `--allow-scripts`, newer npm skips pnpm's install script and leaves a slower `pnpm` that other programs can't start. Homebrew (`brew install pnpm`) or `corepack enable` (Node 22 and 24) work too.
+
+2. Install the dev tools:
+
+   ```bash
+   pnpm install
+   ```
+
+3. Run Ember from this checkout:
+
+   ```bash
+   pnpm dev
+   ```
+
+   This builds Ember into `dist/` and opens old.reddit.com in a separate Firefox window with Ember loaded. It uses its own profile in `.dev-profile/` (git-ignored), so your everyday Firefox and its copy of Ember aren't touched. Log in to Reddit in that window the first time and you stay logged in.
+
+   Leave it running while you work. Saving a file under `src/content/` or `src/lib/` rebuilds Ember and reloads the add-on (or press `R` in the terminal); reload the tab to see the change. Changes to `src/manifest.json` or the icons need a restart. Stop with Ctrl+C or by quitting that Firefox.
+
+- Delete `.dev-profile/` to start over, logged out and with default settings.
+- `web-ext` finds Firefox in its usual place: `/Applications` on macOS, `firefox` on your `PATH` on Linux. To use another build, pass it through: `pnpm dev --firefox=nightly` (or `deved`, `flatpak:org.mozilla.firefox`, or a path). Other `web-ext run` options work the same way.
+- Ember's errors show in the tab's web console (F12).
+
 ### Commands
 
 ```bash
-pnpm dev                  # Firefox with Ember loaded, rebuilding and reloading on save
+pnpm dev                  # Ember in a separate Firefox (profile kept in .dev-profile/), rebuilding and reloading on save
 pnpm test                 # vitest unit tests for the pure modules in src/lib
 pnpm lint                 # oxlint (type-aware) + web-ext lint
 pnpm build                # type-check, then bundle into dist/
@@ -70,8 +102,6 @@ pnpm fixtures [pages]     # scrub saved old.reddit pages into test/fixtures (see
 pnpm check [part]         # load Ember into the fixtures in Chromium: behavior checks + screenshots
 pnpm sign                 # signed .xpi, with AMO keys from the Keychain (see Releasing)
 ```
-
-`pnpm dev` keeps its Firefox profile in `.dev-profile`, so log in to Reddit the first time and you stay logged in.
 
 `pnpm lint` reports warnings about `innerHTML`. They're expected: the settings panel escapes everything it renders (`escape` in `src/content/panel.ts`), and the nav bar's markup is static.
 

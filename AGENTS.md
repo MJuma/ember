@@ -68,7 +68,7 @@ Local only (git-ignored): `dist/`, `web-ext-artifacts/`, `release/`, `.dev-profi
 
 ## Working locally
 
-**Setup:** Node 22 (`.node-version`), pnpm (version pinned by `packageManager`). `pnpm install`. If your machine installs through a private npm mirror, `.pnpmfile.cjs` strips mirror tarball URLs from `pnpm-lock.yaml` so CI resolves against public npm; keep it.
+**Setup** (macOS and Linux; step by step in the README's *Development* section): Firefox, Node 22 or newer (`.node-version` pins CI's 22), pnpm. Any recent pnpm switches itself to the version pinned by `packageManager`. Install it with `npm install -g pnpm --allow-scripts=pnpm`: Node 25+ has no corepack, and npm 12 otherwise skips the script that installs pnpm 12's native binary, leaving a shebang-less shim that `spawn()` fails on with `ENOEXEC`. Then `pnpm install` and `pnpm dev`. If your machine installs through a private npm mirror, `.pnpmfile.cjs` strips mirror tarball URLs from `pnpm-lock.yaml` so CI resolves against public npm; keep it.
 
 **Commands:**
 
@@ -85,7 +85,7 @@ Run `pnpm test`, `pnpm lint` and `pnpm check` before every commit; CI runs build
 
 **Fixtures:** old.reddit sends logged-out visitors to a login page and blocks automated logins, so checks run on pages the owner saved from Firefox (*Save Page As… → Web Page, complete*) and scrubbed with `pnpm fixtures`. `check.mjs` needs `deep-thread-post.html` (it reads the thread URL from its canonical link) and `subreddit-page.html`. It serves fixtures at their real paths, stubs `browser.storage`, and injects Ember first in `<head>`. Reddit's inline `onclick` handlers survive scrubbing without their scripts, so `click_thing is not defined` errors are expected and filtered. Fixtures have no Reddit JS, which is why Ember implements collapse itself.
 
-**Real Firefox:** `pnpm dev` keeps its profile in `.dev-profile`, so the owner logs in to Reddit once. It runs `web-ext` with `HOME` pointed at an empty temp folder, because web-ext reads Firefox's `profiles.ini` under `$HOME` and macOS can block that. Playwright's Firefox doesn't start on the owner's Mac ("Could not find profile folder"), so automated checks use Chromium and the owner checks Firefox by hand. Don't load `dist/` over the owner's installed copy (same add-on ID, same storage); use `pnpm dev`'s profile.
+**Real Firefox:** `pnpm dev` keeps its profile in `.dev-profile`, so the owner logs in to Reddit once. That login is the owner's, so don't delete the folder. The watcher rebuilds the script and stylesheet only; `src/manifest.json` and icons are copied when it starts, so changing them needs a restart. After a reload, the open tab needs a refresh. On macOS it runs `web-ext` with `HOME` pointed at an empty temp folder, because web-ext reads Firefox's `profiles.ini` under `$HOME` and macOS can block that. Linux keeps the real `HOME`: Firefox inherits it and would otherwise lose the user's fonts and GTK theme. web-ext finds Firefox in `/Applications` (macOS) or as `firefox` on `PATH` (Linux). Extra arguments go to `web-ext run`, e.g. `pnpm dev --firefox=nightly` (or `deved`, `flatpak:org.mozilla.firefox`, a path) or `--devtools`. Playwright's Firefox doesn't start on the owner's Mac ("Could not find profile folder"), so automated checks use Chromium and the owner checks Firefox by hand. Don't load `dist/` over the owner's installed copy (same add-on ID, same storage); use `pnpm dev`'s profile.
 
 ## Publishing (GitHub)
 
